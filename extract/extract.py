@@ -25,7 +25,7 @@ if data[0:3] != b'SAV':
     exit()
 
 #WAV取り出し 0x14
-#WAV 抽出してみたけど鳴らないですね…。
+#MediaPlayerでは鳴りませんでした。MPC-HCで鳴りました。
 wavDataStart = int.from_bytes(data[0x14:0x17], byteorder='little') 
 wavDataSize =  int.from_bytes(data[wavDataStart + 4:wavDataStart + 8], byteorder='little') + 8
 print("wavStart=" + hex(wavDataStart) + ":size=" + hex(wavDataSize))
@@ -38,20 +38,24 @@ wavFile.close()
 #まだいまのところ、うまく取り出せたり取り出せなかったりします。
 #画像枚数 0x10
 jpegCount = int.from_bytes(data[0x10:0x13], byteorder='little') - 1
-
+print("JpegCount=" + str(jpegCount))
 #jpegIndex位置ひとまず決め打ち
 jpegIndexStart = 0x28
 header = b''
-for index in range(jpegCount):
+index = 0
+while index < jpegCount:
     jpegIndexEnd = jpegIndexStart + 4
     jpegDataStart = int.from_bytes(data[jpegIndexStart:jpegIndexEnd], byteorder='little')
     jpegDataEnd = int.from_bytes(data[jpegIndexEnd:(jpegIndexEnd+4)], byteorder='little')
     print(str(index) + ":indexStart=" + hex(jpegIndexStart) + ": jpegStart=" + hex(jpegDataStart) + ": jpegEnd=" + hex(jpegDataEnd))
 
-    if jpegDataStart > jpegDataEnd:
-        print("データエラー？")
-        jpegIndexStart = jpegIndexEnd
-        continue
+    while jpegDataStart > jpegDataEnd:
+        print(str(index) + ":データエラー？")
+        #jpegIndexStart = jpegIndexEnd
+        index = index + 1
+        jpegIndexEnd = jpegIndexEnd + 4
+        jpegDataEnd = int.from_bytes(data[jpegIndexEnd:(jpegIndexEnd+4)], byteorder='little')
+        
 
     #FFDAが出てくるまではヘッダ
     if data[jpegDataStart+1] != 0xda:
@@ -65,5 +69,4 @@ for index in range(jpegCount):
         jpegFile.close()
         print("data")
     jpegIndexStart = jpegIndexEnd
-
-
+    index = index + 1
