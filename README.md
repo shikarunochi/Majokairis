@@ -2,7 +2,7 @@
 マジョカアイリス（microSD付バージョン）のmicroSDカード内にある動画データ（拡張子 savi）から、jpeg画像と wav データを抽出します。
 （いまのところ、抽出できたりできなかったりします。）
 python で書いてます。
->python extract.py A006.savi
+python extract.py A006.savi
 のように対象ファイルを指定して使ってください。
 
 データフォーマットはこちらを参考にさせていただきました。
