@@ -11,4 +11,6 @@ python extract.py A006.savi
 
 データフォーマットはこちらを参考にさせていただきました。
 
-https://twitter.com/boyahina/status/1346041627949731842/photo/1
+https://twitter.com/boyahina/status/1346041627949731842/
+
+https://twitter.com/bakueikozo/status/1347204355582173184
