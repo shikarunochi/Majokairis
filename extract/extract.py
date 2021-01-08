@@ -1,9 +1,9 @@
-#こちら参考に。https://twitter.com/boyahina/status/1346041627949731842/photo/1
+#こちら参考に。https://twitter.com/boyahina/status/1346041627949731842/
+#             https://twitter.com/bakueikozo/status/1347204355582173184
 #JPEG FORMAT https://www.setsuki.com/hsp/ext/jpg.htm
 #WAV FORMAT https://www.youfit.co.jp/archives/1418
 import  sys
 import os
-import struct
 
 args = sys.argv
 if len(args) != 2:
@@ -20,11 +20,11 @@ data = movieFile.read()
 movieFile.close()
 
 #ヘッダ確認
-if data[0:3] != b'SAV':
+if data[0:4] != b'SAVI':
     print('マジョカアイリス動画ファイルではありません')
     exit()
 
-#WAV取り出し 0x14
+#WAV取り出し 0x14-0x17
 #MediaPlayerでは鳴りませんでした。MPC-HCで鳴りました。
 wavDataStart = int.from_bytes(data[0x14:0x17], byteorder='little') 
 wavDataSize =  int.from_bytes(data[wavDataStart + 4:wavDataStart + 8], byteorder='little') + 8
@@ -35,38 +35,37 @@ wavFile.write(data[wavDataStart:wavDataStart + wavDataSize])
 wavFile.close()
 
 #JPEG取り出し
-#まだいまのところ、うまく取り出せたり取り出せなかったりします。
-#画像枚数 0x10
+
+#JPEG画像開始 0x20-0x23
+jpegImageIndex = int.from_bytes(data[0x20:0x23], byteorder='little') 
+
+#JPEG画像枚数 0x10-0x13 ヘッダ分を引いてます
 jpegCount = int.from_bytes(data[0x10:0x13], byteorder='little') - 1
+
+#JPEGヘッダ開始 0x28-0x2B
+jpegHeaderDataStart = int.from_bytes(data[0x28:0x2B], byteorder='little')
+#JPEGヘッダサイズ 0x2C-0x2F
+jpegHeaderDataSize = int.from_bytes(data[0x2C:0x2F], byteorder='little')
+
+jpegHeader = data[jpegHeaderDataStart:jpegHeaderDataStart + jpegHeaderDataSize]
+
 print("JpegCount=" + str(jpegCount))
-#jpegIndex位置ひとまず決め打ち
-jpegIndexStart = 0x28
-header = b''
-index = 0
+#jpegIndex位置 0x30
+jpegIndexStart = 0x30
+index = 1
 while index < jpegCount:
     jpegIndexEnd = jpegIndexStart + 4
     jpegDataStart = int.from_bytes(data[jpegIndexStart:jpegIndexEnd], byteorder='little')
     jpegDataEnd = int.from_bytes(data[jpegIndexEnd:(jpegIndexEnd+4)], byteorder='little')
     print(str(index) + ":indexStart=" + hex(jpegIndexStart) + ": jpegStart=" + hex(jpegDataStart) + ": jpegEnd=" + hex(jpegDataEnd))
 
-    while jpegDataStart > jpegDataEnd:
-        print(str(index) + ":データエラー？")
-        #jpegIndexStart = jpegIndexEnd
-        index = index + 1
-        jpegIndexEnd = jpegIndexEnd + 4
-        jpegDataEnd = int.from_bytes(data[jpegIndexEnd:(jpegIndexEnd+4)], byteorder='little')
-        
-
-    #FFDAが出てくるまではヘッダ
-    if data[jpegDataStart+1] != 0xda:
-        header = header + data[jpegDataStart:jpegDataEnd]
-        print("header")
-    else:
+    if jpegDataStart < jpegDataEnd:
         jpegFileName = baseFileName + '_' + str(index) + '.jpg'
         jpegFile = open(jpegFileName, 'wb')
         #ヘッダ + データで出力
-        jpegFile.write(header + data[jpegDataStart:jpegDataEnd])
+        jpegFile.write(jpegHeader + data[jpegDataStart:jpegDataEnd])
         jpegFile.close()
-        print("data")
+        index = index + 1
+
     jpegIndexStart = jpegIndexEnd
-    index = index + 1
+   
