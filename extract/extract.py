@@ -36,9 +36,6 @@ wavFile.close()
 
 #JPEG取り出し
 
-#JPEG画像開始 0x20-0x23
-jpegImageIndex = int.from_bytes(data[0x20:0x23], byteorder='little') 
-
 #JPEG画像枚数 0x10-0x13 ヘッダ分を引いてます
 jpegCount = int.from_bytes(data[0x10:0x13], byteorder='little') - 1
 
@@ -50,8 +47,10 @@ jpegHeaderDataSize = int.from_bytes(data[0x2C:0x2F], byteorder='little')
 jpegHeader = data[jpegHeaderDataStart:jpegHeaderDataStart + jpegHeaderDataSize]
 
 print("JpegCount=" + str(jpegCount))
-#jpegIndex位置 0x30
-jpegIndexStart = 0x30
+
+#JPEG画像開始 0x20-0x23
+jpegIndexStart = int.from_bytes(data[0x20:0x23], byteorder='little') 
+
 index = 1
 while index < jpegCount:
     jpegIndexEnd = jpegIndexStart + 4
@@ -66,6 +65,7 @@ while index < jpegCount:
         jpegFile.write(jpegHeader + data[jpegDataStart:jpegDataEnd])
         jpegFile.close()
         index = index + 1
-
+    else:
+        print("data skip")
     jpegIndexStart = jpegIndexEnd
-   
+    
